@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package mastodon;
+
+import "google/protobuf/timestamp.proto";
+
+service Mastodon {
+	rpc StreamTimeline(StreamTimelineRequest) returns (stream StreamTimelineResponse) {}
+}
+
+message StreamTimelineRequest {
+	string server = 1;
+}
+message StreamTimelineResponse {
+	string                    id         = 1;
+	google.protobuf.Timestamp created_at = 2;
+	string                    content    = 3;
+}

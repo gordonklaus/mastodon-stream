@@ -1,0 +1,14 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/gordonklaus/mastodon-stream/proto
+plugins:
+  - name: go
+    path: ["go", "run", "google.golang.org/protobuf/cmd/protoc-gen-go"]
+    out: .
+    opt: paths=source_relative
+  - name: connect-go
+    path: ["go", "run", "github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go"]
+    out: .
+    opt: paths=source_relative
