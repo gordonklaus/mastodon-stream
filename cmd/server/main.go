@@ -2,17 +2,11 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
-	"fmt"
 	"log"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
-	"time"
-
-	"github.com/gordonklaus/mastodon-stream/proto/protoconnect"
 )
 
 func main() {
@@ -30,29 +24,11 @@ func main() {
 
 	server := NewServer()
 
-	host := ""
-	if *localhost {
-		host = "localhost"
-	}
-
-	router := http.NewServeMux()
-	router.Handle(protoconnect.NewMastodonHandler(server))
-	httpServer := &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", host, *httpPort),
-		Handler: router,
-	}
-	go func() {
-		defer cancel()
-		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("httpServer.ListenAndServe", "err", err)
-		}
-	}()
+	httpServer := ServeHTTP(server, *localhost, *httpPort, cancel)
 
 	<-ctx.Done()
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer shutdownCancel()
-	httpServer.Shutdown(shutdownCtx)
+	ShutdownHTTP(httpServer)
 
 	slog.Info("Done.")
 }

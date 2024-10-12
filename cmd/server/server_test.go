@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -23,23 +22,11 @@ func TestMastodonStream(t *testing.T) {
 
 	server := NewServer()
 
-	router := http.NewServeMux()
-	router.Handle(protoconnect.NewMastodonHandler(server))
-	httpServer := &http.Server{
-		Addr:    fmt.Sprintf("localhost:8080"),
-		Handler: router,
-	}
-	go func() {
-		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			t.Error("httpServer.ListenAndServe", "err", err)
-		}
-	}()
+	httpServer := ServeHTTP(server, true, "8080", func() {})
+	defer ShutdownHTTP(httpServer)
+
+	// Give the server a moment to come up.
 	time.Sleep(time.Second)
-	defer func() {
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer shutdownCancel()
-		httpServer.Shutdown(shutdownCtx)
-	}()
 
 	client := protoconnect.NewMastodonClient(http.DefaultClient, "http://localhost:8080")
 	stream, err := client.StreamTimeline(ctx, connect.NewRequest(&proto.StreamTimelineRequest{
@@ -81,23 +68,11 @@ func TestMastodonStream_ConcurrentStreams(t *testing.T) {
 
 	server := NewServer()
 
-	router := http.NewServeMux()
-	router.Handle(protoconnect.NewMastodonHandler(server))
-	httpServer := &http.Server{
-		Addr:    fmt.Sprintf("localhost:8080"),
-		Handler: router,
-	}
-	go func() {
-		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			t.Error("httpServer.ListenAndServe", "err", err)
-		}
-	}()
+	httpServer := ServeHTTP(server, true, "8080", func() {})
+	defer ShutdownHTTP(httpServer)
+
+	// Give the server a moment to come up.
 	time.Sleep(time.Second)
-	defer func() {
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer shutdownCancel()
-		httpServer.Shutdown(shutdownCtx)
-	}()
 
 	client := protoconnect.NewMastodonClient(http.DefaultClient, "http://localhost:8080")
 
